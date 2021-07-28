@@ -16,9 +16,12 @@ typedef enum {STATE_SW1,STATE_SW2,STATE_NO} sw_state;
 
 void    InitState(void);
 void    UpdateStateMachine (void);
+void    Update_StateOn(void);
+void    Update_StateOff(void);
 
+bool GetState_ChangeSong(void);
 
-extern main_state mainState;
+//extern main_state mainState;
 extern sw_state   swState;
 extern uint8_t  numOrderOfSong;
 

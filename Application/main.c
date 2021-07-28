@@ -113,7 +113,7 @@ UINT out_stream (   /* Returns number of bytes sent or stream status */
 
 bool timeOutTimer0 = true;
 
-uint8_t allSongName[10][13]; //this array is used to store all the file names had been read by FatFs, we can use it to play a previous song.
+uint8_t allSongName[50][13]; //this array is used to store all the file names had been read by FatFs, we can use it to play a previous song.
                             // each song name will be stored into 13 bytes.. of this array
 
 uint8_t  totalSongs = 0 ; // ordinal number of song is playing (stt)
@@ -142,14 +142,14 @@ int main(void)
             QueueMainBuffer = xQueueCreate(BUFFER_SIZE,1);
             if(QueueMainBuffer==0) DBG("creating queue failed  \n");
 
-           if(pdPASS != xTaskCreate(Main_Task, "Main_Task", 1024, NULL, 2, NULL) ) {
+            if(pdPASS != xTaskCreate(Main_Task, "Main_Task", 1024, NULL, 2, NULL) ) {
                DBG("create Main task failed");
-           }
+            }
 
-           if(pdPASS != xTaskCreate(UpdateStateOfSystem_Task,
+            if(pdPASS != xTaskCreate(UpdateStateOfSystem_Task,
                                     "UpdateStateOfSystem_Task", 1024, NULL, 3, NULL) ) {
-               DBG("create UpdateStateOfSystem_Task failed");
-           }
+                DBG("create UpdateStateOfSystem_Task failed");
+            }
 
             vTaskStartScheduler();
 
@@ -166,6 +166,7 @@ static void Main_Task(void *pvParameters )
         {
             numOrderOfSong =1;  // we have at least 1 .wav file(s) in this SD card
             DBG("Connection succeed! Open 0: directory  \n");
+
             //This below while loop is used to save all .wav file names into   allSongName[500], and count the number of songs.
             while (fr == FR_OK && FileInfo.fname[0]) {         /* Repeat while an item is found */
                 uint8_t ovcmh;
@@ -236,7 +237,7 @@ UINT out_stream (   /* Returns number of bytes sent or stream status */
         while ((cnt < btf)  /*&& (audioState != CHANGE_AUDIO)*/ /*&& FIFO_READY*/);
     }
 
-    if( (mainState == STATE_NEXT) || (mainState == STATE_PREVIOUS) ){
+    if( GetState_ChangeSong()){
         xSemaphoreGive(BiSemap_UpdateStateMachine);
         DBG("change song \n");
         cnt = 0;
@@ -263,14 +264,12 @@ void    PlayMusic(uint8_t * p_songName, uint8_t num){
     uint32_t rx_32;
     if (f_open(&Fil, p_songName, FA_READ) == FR_OK) {
         DBG("Open File Num.%d %s\n",num, p_songName);
-        mainState = STATE_ON;
-        PWMGenEnable(PWM0_BASE, PWM_GEN_0);
+        Update_StateOn();
 
         f_forward(&Fil, out_stream, f_size(&Fil) ,(UINT*) &rx_32);
 
         f_close(&Fil);                         /* Close the file */
-        PWMGenDisable(PWM0_BASE, PWM_GEN_0);
-        mainState = STATE_OFF;
+        Update_StateOff();
     }
     else {
         DBG("Could not open file %s\n", p_songName);

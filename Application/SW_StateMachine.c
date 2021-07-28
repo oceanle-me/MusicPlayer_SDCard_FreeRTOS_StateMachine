@@ -17,7 +17,7 @@
 #include "driverlib/pwm.h"
 #include "Init.h"
 
-main_state mainState;
+static main_state mainState;
 sw_state   swState;
 
 
@@ -108,3 +108,19 @@ void    UpdateStateMachine (void)
     }
 }
 
+bool GetState_ChangeSong(void){
+    if( (mainState == STATE_NEXT) || (mainState == STATE_PREVIOUS) ){
+        return true;
+    }
+    else return false;
+}
+
+void Update_StateOn(void){
+    mainState = STATE_ON;
+    PWMGenEnable(PWM0_BASE, PWM_GEN_0);
+}
+
+void Update_StateOff(void){
+    PWMGenDisable(PWM0_BASE, PWM_GEN_0);
+    mainState = STATE_OFF;
+}
